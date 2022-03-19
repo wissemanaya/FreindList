@@ -16,7 +16,6 @@ export class AccountService {
       name,
     });
     const result = await newAccount.save();
-    console.log(name);
   }
 
   async GetAccounts() {
@@ -26,7 +25,6 @@ export class AccountService {
 
   async GetAccountById(id: String): Promise<Account> {
     const found = await this.accountModel.findById(id).exec();
-    console.log(found);
     return found;
   }
 
@@ -46,20 +44,6 @@ export class AccountService {
   }
 
   async AcceptRequest(id: string, idperson: string): Promise<void> {
-    // id: string my id
-    // idperson: string   id of person who send a request
-    /*const myquery = await this.accountModel.findById(id);
-    const personquery = await this.accountModel.findById(idperson);
-    const personname = personquery.name ; 
-    const myfreindlist = myquery.freindlist ;
-    if (myquery.IncomingRequests.includes(personname)){
-           myquery.freindlist.push(personname)
-           this.remove(personname,myquery.IncomingRequests)
-           myquery.freindlist.push(myquery.name)
-           this.remove(myquery.name,personquery.OutgoingRequests)
-    }else{
-
-    }*/
     this.AddFreind(id, idperson);
   }
 
@@ -69,24 +53,14 @@ export class AccountService {
     const MyUpdate = await this.accountModel
       .findByIdAndUpdate(id, {
         $push: { freindlist: myfreindquery.name },
-        $set: {
-          IncomingRequests: this.remove(
-            myfreindquery.name,
-            myquery.IncomingRequests,
-          ),
-        },
+        $pull: { IncomingRequests : myfreindquery.name}
       })
       .exec();
 
     const MyFreinfUpdate = await this.accountModel
       .findByIdAndUpdate(idNewFreind, {
         $push: { freindlist: myquery.name },
-        $set: {
-          OutgoingRequests: this.remove(
-            myquery.name,
-            myfreindquery.OutgoingRequests,
-          ),
-        },
+        $pull: { OutgoingRequests : myquery.name}
       })
       .exec();
     return null;
@@ -98,19 +72,21 @@ export class AccountService {
     const personaccount = await this.accountModel.findById(idperson).exec();
     const personfreinds = personaccount.freindlist;
     for (let j in personfreinds) {
-      if (myaccount.freindlist.includes(personfreinds[j]) && ((personfreinds[j] != myaccount.name))) {
+      if (
+        myaccount.freindlist.includes(personfreinds[j]) &&
+        personfreinds[j] != myaccount.name
+      ) {
         difference.set(personfreinds[j], FreindshipStaus.FREIND);
-      } else if (myaccount.OutgoingRequests.includes(personfreinds[j])&& ((personfreinds[j] != myaccount.name))) {
+      } else if (
+        myaccount.OutgoingRequests.includes(personfreinds[j]) &&
+        personfreinds[j] != myaccount.name
+      ) {
         difference.set(personfreinds[j], FreindshipStaus.REQUESTED);
-      } else if ((personfreinds[j] != myaccount.name)){
+      } else if (personfreinds[j] != myaccount.name) {
         difference.set(personfreinds[j], FreindshipStaus.CONNECT);
       }
     }
-    console.log(difference) ;
+    console.log(difference);
   }
 
-  async remove(value, arr) {
-    console.log('here');
-    return arr.filter((item) => item !== value);
-  }
 }

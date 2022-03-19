@@ -39,14 +39,6 @@ export class AccountController {
     return await this.accountService.AcceptRequest(id , idperson);
   }
 
-
-  
-
-  /*@Patch('/:id/:idperson')
-  async SendRequest(@Param('id') id: string,@Param('idperson')idperson : string): Promise<void> {
-    return await this.accountService.SendRequest(id , idperson);
-  }*/
-
   
 
   @Get('/:id/:idperson')
