@@ -22,16 +22,35 @@ export class AccountController {
 
   @Get('/:id')
   GetAccountById(@Param('id') id: string): Promise<Account> {
-    return this.accountService.GetRequestsById(id);
+    return this.accountService.GetAccountById(id);
   }
 
-  @Patch('/:id/:idNewFreind')
-  async AddFreind(@Param('id') id: string,@Param('idNewFreind')idNewFreind : string): Promise<Account> {
-    return await this.accountService.AddFreind(id , idNewFreind);
+
+
+
+  @Patch('/:id/:idperson')
+  async SendRequest(@Param('id') id: string,@Param('idperson')idperson : string): Promise<void> {
+    return await this.accountService.SendRequest(id , idperson);
   }
+
+ 
+  @Patch('request/:id/:idperson')
+  async AcceptRequest(@Param('id') id: string,@Param('idperson')idperson : string): Promise<void> {
+    return await this.accountService.AcceptRequest(id , idperson);
+  }
+
+
+  
+
+  /*@Patch('/:id/:idperson')
+  async SendRequest(@Param('id') id: string,@Param('idperson')idperson : string): Promise<void> {
+    return await this.accountService.SendRequest(id , idperson);
+  }*/
+
+  
 
   @Get('/:id/:idperson')
-  async checklist(@Param('id') id: string,@Param('idperson')idperson : string) {
+  async checklist(@Param('id') id: string,@Param('idperson')idperson : string) : Promise<any> {
     return await this.accountService.checklist(id , idperson);
   }
 

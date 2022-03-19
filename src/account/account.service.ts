@@ -4,6 +4,7 @@ import { Account, AccountDocument } from './accounst.schema';
 import { Model } from 'mongoose';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { Z_DEFLATED } from 'zlib';
+import { FreindshipStaus } from './freindship-status';
 @Injectable()
 export class AccountService {
   constructor(
@@ -23,70 +24,93 @@ export class AccountService {
     return accounts;
   }
 
-  async GetRequestsById(id: String): Promise<Account> {
+  async GetAccountById(id: String): Promise<Account> {
     const found = await this.accountModel.findById(id).exec();
     console.log(found);
     return found;
   }
 
-  async AddFreind(id: string, idNewFreind: string): Promise<Account> {
-    //const myaccount = await this.accountModel.findById(id);
-    //const newfreindaccount = await this.accountModel.findById(idNewFreind);
-    const myfilter = { _id: id };
-    const myfreindfilter = { _id: idNewFreind };
+  async SendRequest(id: string, idperson: string): Promise<void> {
     const myquery = await this.accountModel.findById(id);
-    const myname = myquery.name;
-    const myfreindquery = await this.accountModel.findById(idNewFreind);
-    const myfreindname = myfreindquery.name;
+    const personquery = await this.accountModel.findById(idperson);
     const MyUpdate = await this.accountModel
-      .findByIdAndUpdate(myfilter, {
-        $push: { freindlist: myfreindname },
+      .findByIdAndUpdate(id, {
+        $push: { OutgoingRequests: personquery.name },
+      })
+      .exec();
+    const persoupdate = await this.accountModel
+      .findByIdAndUpdate(idperson, {
+        $push: { IncomingRequests: myquery.name },
+      })
+      .exec();
+  }
+
+  async AcceptRequest(id: string, idperson: string): Promise<void> {
+    // id: string my id
+    // idperson: string   id of person who send a request
+    /*const myquery = await this.accountModel.findById(id);
+    const personquery = await this.accountModel.findById(idperson);
+    const personname = personquery.name ; 
+    const myfreindlist = myquery.freindlist ;
+    if (myquery.IncomingRequests.includes(personname)){
+           myquery.freindlist.push(personname)
+           this.remove(personname,myquery.IncomingRequests)
+           myquery.freindlist.push(myquery.name)
+           this.remove(myquery.name,personquery.OutgoingRequests)
+    }else{
+
+    }*/
+    this.AddFreind(id, idperson);
+  }
+
+  async AddFreind(id: string, idNewFreind: string): Promise<Account> {
+    const myquery = await this.accountModel.findById(id);
+    const myfreindquery = await this.accountModel.findById(idNewFreind);
+    const MyUpdate = await this.accountModel
+      .findByIdAndUpdate(id, {
+        $push: { freindlist: myfreindquery.name },
+        $set: {
+          IncomingRequests: this.remove(
+            myfreindquery.name,
+            myquery.IncomingRequests,
+          ),
+        },
       })
       .exec();
 
     const MyFreinfUpdate = await this.accountModel
-      .findByIdAndUpdate(myfreindfilter, {
-        $push: { freindlist: myname },
+      .findByIdAndUpdate(idNewFreind, {
+        $push: { freindlist: myquery.name },
+        $set: {
+          OutgoingRequests: this.remove(
+            myquery.name,
+            myfreindquery.OutgoingRequests,
+          ),
+        },
       })
       .exec();
-    console.log(MyFreinfUpdate, MyUpdate);
     return null;
   }
-
-  /*async checklist(id: String, idperson: string): Promise<void> {
-    const myaccount = await this.accountModel.findById(id).exec();
-    const personaccount = await this.accountModel.findById(idperson).exec();
-    /*console.log(myaccount.freindlist) ;*/
-    /*const freinds = myaccount.freindlist;
-    const personfreinds = personaccount.freindlist;
-    console.log(freinds);
-    console.log(personfreinds);
-    for (let i in freinds) {
-      for (let j in personfreinds) {
-        //if ((personfreinds[i], { $eq: freinds[j] })) {
-          if (freinds[i]==  personfreinds[j] ) {
-          console.log('in ur freindlist',freinds[i] );
-        } else {
-          console.log('add freind',personfreinds[j] );
-        }
-      }
-    }
-  }*/
 
   async checklist(id: String, idperson: string): Promise<void> {
     let difference = new Map<string, string>();
     const myaccount = await this.accountModel.findById(id).exec();
     const personaccount = await this.accountModel.findById(idperson).exec();
-    const freinds = myaccount.freindlist;
     const personfreinds = personaccount.freindlist;
-      for (let j in personfreinds) {
-          if (freinds.includes(personfreinds[j])){
-            difference.set(personfreinds[j] , "comun freind")
-          }else {
-            difference.set(personfreinds[j] , "add this freind")
-          }
+    for (let j in personfreinds) {
+      if (myaccount.freindlist.includes(personfreinds[j]) && ((personfreinds[j] != myaccount.name))) {
+        difference.set(personfreinds[j], FreindshipStaus.FREIND);
+      } else if (myaccount.OutgoingRequests.includes(personfreinds[j])&& ((personfreinds[j] != myaccount.name))) {
+        difference.set(personfreinds[j], FreindshipStaus.REQUESTED);
+      } else if ((personfreinds[j] != myaccount.name)){
+        difference.set(personfreinds[j], FreindshipStaus.CONNECT);
       }
+    }
     console.log(difference) ;
   }
 
+  async remove(value, arr) {
+    console.log('here');
+    return arr.filter((item) => item !== value);
+  }
 }

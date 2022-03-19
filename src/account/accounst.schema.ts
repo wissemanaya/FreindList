@@ -21,9 +21,13 @@ export class Account {
   name: string;
 
   @Prop({ required: true })
-  freindlist: [];
+  freindlist: string[];
 
+  @Prop({ required: true })
+  OutgoingRequests: string[];
 
+  @Prop({ required: true })
+  IncomingRequests: string[];
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);
